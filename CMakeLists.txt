@@ -111,6 +111,8 @@ option(BUILD_SHARED        "Build Charm++ dynamic libraries" OFF)
 # Other options
 option(EVERYLB             "Compile EveryLB suite of load balancing strategies" OFF)
 option(F90CHARM            "Build f90charm" OFF)
+# LRTS PMI options
+set(LRTS_PMI "" CACHE STRING "PMI type for UCX and OFI layers, can be one of simplepmi, slurmpmi, slurmpmi2, or ompipmix")
 
 set(EXTRA_OPTS "" CACHE STRING "Extra flags to pass to compilers.")
 add_compile_options(${EXTRA_OPTS})
@@ -407,6 +409,11 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/src/arch/${GDIR}/conv-mach-local.sh)
   configure_file(src/arch/${GDIR}/conv-mach-local.h            include/ COPYONLY)
 endif()
 
+if(LRTS_PMI)
+  configure_file(${CMAKE_SOURCE_DIR}/src/arch/${GDIR}/conv-mach-${LRTS_PMI}.sh include/ COPYONLY)
+  configure_file(${CMAKE_SOURCE_DIR}/src/arch/${GDIR}/conv-mach-${LRTS_PMI}.h include/ COPYONLY)
+endif()
+
 # Header files
 configure_file(src/arch/${GDIR}/conv-common.h                include/ COPYONLY)
 configure_file(src/arch/${VDIR}/conv-mach.h                  include/ COPYONLY)
@@ -673,6 +680,9 @@ endif()
 file(APPEND ${optfile_sh} "CMK_HWLOC_LIBS=\"-lhwloc_embedded -lm\"\n" )
 file(APPEND ${optfile_sh} "CMK_LIBS=\"$CMK_LIBS -lz ${DL_LIB}\"\n")
 
+if(LRTS_PMI)
+  file(APPEND ${optfile_sh} ". ${CMAKE_BINARY_DIR}/include/conv-mach-${LRTS_PMI}.sh\n")
+endif()
 
 # Create conv-mach-opt.h
 set(optfile_h ${CMAKE_BINARY_DIR}/include/conv-mach-opt.h)
@@ -682,6 +692,10 @@ file(APPEND ${optfile_h} "#define CMK_OPTIMIZE ${CMK_OPTIMIZE}\n")
 
 if(NOT ${NETWORK} STREQUAL "mpi")
     file(APPEND ${optfile_h} "#include \"cc-${CMK_COMPILER}.h\"\n")
+endif()
+
+if(LRTS_PMI)
+  file(APPEND ${optfile_h} "#include \"conv-mach-${LRTS_PMI}.h\"\n")
 endif()
 
 # Create conv-mach-opt.mak
