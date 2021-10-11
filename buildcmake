@@ -265,10 +265,37 @@ done
 
 ############ End option parsing
 
-opt_network=$(echo $triplet | cut -d '-' -f1)
+# Build option setup
+
+# Special handling for gni-crayxc, gni-crayxe, mpi-crayxc, mpi-crayxe
+if [[ $actual_triplet == gni-* || $actual_triplet == *-cray* ]]; then
+  opt_network=$actual_triplet
+  # Need to use Cray's compiler frontends on Cray systems
+  opt_CC=cc
+  opt_CXX=CC
+  opt_FC=ftn
+else
+  opt_network=$(echo "$actual_triplet" | cut -d '-' -f1)
+fi
+
+my_os=$(echo "$actual_triplet" | cut -d '-' -f2)
+
+if [[ $opt_network == "mpi" && $my_os == "win" ]]; then
+  echo "Warning: CMake build is not supported with MPI on Windows, running ./buildold instead."
+  sleep 2
+  "$my_srcdir/buildold" "${full_args[@]}"
+  exit $?
+fi
+
+# Special handling for Windows compiler
+if [[ $my_os == "win" && ( -z $opt_CC || $opt_CC == "msvc" ) ]]; then
+  # Need to use unix2nt_cc on Windows/Cygwin
+  opt_CC="$(realpath "$my_srcdir")/src/arch/win/unix2nt_cc"
+  opt_CXX="$opt_CC"
+  opt_FC=
+fi
 
 [[ $opt_production -eq 0 ]] && opt_production='Debug' || opt_production='Release'
-
 
 echo "Build options for $triplet:"
 
@@ -279,11 +306,9 @@ done
 
 builddir=$triplet$opt_suffix
 
-rm -rf $builddir
-
-mkdir $builddir
-
-cd $builddir
+rm -rf "$builddir"
+mkdir -p "$builddir"
+cd "$builddir"
 
 if [[ -n $opt_libdir ]]; then
   mkdir -p include
