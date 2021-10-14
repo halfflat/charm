@@ -230,7 +230,7 @@ endif()
 set(CHARM_PLATFORM "${NETWORK}-${CHARM_OS}-${CHARM_CPU}")
 
 set(CMK_BUILD_CRAY 0)
-if(${NETWORK} MATCHES "gni-")
+if(${NETWORK} MATCHES "gni-" OR ${NETWORK} MATCHES "ofi-cray")
   set(CHARM_PLATFORM "${NETWORK}")
   set(CMK_BUILD_CRAY 1)
 elseif(${NETWORK} MATCHES "mpi-cray")
@@ -360,6 +360,8 @@ elseif(${NETWORK} MATCHES "gni-")
   set(GDIR "gni")
 elseif(${NETWORK} MATCHES "mpi-cray")
   set(GDIR "mpi")
+elseif(${NETWORK} MATCHES "ofi-cray")
+  set(GDIR "ofi")
 else()
   set(GDIR ${NETWORK})
 endif()
@@ -467,34 +469,35 @@ endforeach()
 
 
 # proc_management
-# file(MAKE_DIRECTORY include/proc_management/simple_pmi)
+if(${NETWORK} MATCHES "ucx" OR ${NETWORK} MATCHES "ofi")
+  # file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/proc_management/simple_pmi)
 
-set(proc_management-sources
-src/arch/util/proc_management/runtime-pmi.C
-src/arch/util/proc_management/runtime-pmix.C
-src/arch/util/proc_management/runtime-codec.h
-src/arch/util/proc_management/runtime-pmi2.C
-src/arch/util/proc_management/runtime.h
-)
+  set(proc_management-sources
+  src/arch/util/proc_management/runtime-pmi.C
+  src/arch/util/proc_management/runtime-pmix.C
+  src/arch/util/proc_management/runtime-codec.h
+  src/arch/util/proc_management/runtime-pmi2.C
+  src/arch/util/proc_management/runtime.h
+  )
 
-set(proc_management-simple_pmi-sources
-src/arch/util/proc_management/simple_pmi/pmi.h
-src/arch/util/proc_management/simple_pmi/mpl.h
-src/arch/util/proc_management/simple_pmi/simple_pmi.C
-src/arch/util/proc_management/simple_pmi/simple_pmiutil.C
-src/arch/util/proc_management/simple_pmi/simple_pmiutil.h
-)
+  set(proc_management-simple_pmi-sources
+  src/arch/util/proc_management/simple_pmi/pmi.h
+  src/arch/util/proc_management/simple_pmi/mpl.h
+  src/arch/util/proc_management/simple_pmi/simple_pmi.C
+  src/arch/util/proc_management/simple_pmi/simple_pmiutil.C
+  src/arch/util/proc_management/simple_pmi/simple_pmiutil.h
+  )
 
-# FIXME: these should be in include/proc_management
-foreach(filename ${proc_management-sources})
-    configure_file(${filename} include/ COPYONLY)
-endforeach()
+  # FIXME: this should be in include/proc_management/
+  foreach(filename ${proc_management-sources})
+      configure_file(${filename} include/ COPYONLY)
+  endforeach()
 
-# FIXME: these should be in include/proc_management/simple_pmi
-foreach(filename ${proc_management-simple_pmi-sources})
-    configure_file(${filename} include/ COPYONLY)
-endforeach()
-
+  # FIXME: this should be in include/proc_management/simple_pmi
+  foreach(filename ${proc_management-simple_pmi-sources})
+      configure_file(${filename} include/ COPYONLY)
+  endforeach()
+endif()
 
 # Charmxi
 add_subdirectory(src/xlat-i)

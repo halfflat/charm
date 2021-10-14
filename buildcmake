@@ -265,9 +265,10 @@ done
 
 ############ End option parsing
 
+<<<<<<< HEAD
 # Build option setup
 
-# Special handling for gni-crayxc, gni-crayxe, mpi-crayxc, mpi-crayxe
+# Special handling for gni-crayxc, gni-crayxe, mpi-crayxc, mpi-crayxe, mpi-crayshasta, ofi-crayshasta
 if [[ $actual_triplet == gni-* || $actual_triplet == *-cray* ]]; then
   opt_network=$actual_triplet
   # Need to use Cray's compiler frontends on Cray systems
